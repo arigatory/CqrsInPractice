@@ -13,39 +13,69 @@ namespace UI.Students
         public string SelectedNumberOfCourses { get; set; } = "";
 
         public Command SearchCommand { get; }
-        public Command CreateStudentCommand { get; }
-        public Command<StudentDto> UpdateStudentCommand { get; }
-        public Command<StudentDto> DeleteStudentCommand { get; }
+        public Command RegisterStudentCommand { get; }
+        public Command<StudentDto> EditPersonalInfoCommand { get; }
+        public Command<StudentDto> UnregisterStudentCommand { get; }
+        public Command<long> EnrollCommand { get; }
+        public Command<long> TransferCommand { get; }
+        public Command<long> DisenrollCommand { get; }
         public IReadOnlyList<StudentDto> Students { get; private set; }
 
         public StudentListViewModel()
         {
             SearchCommand = new Command(Search);
-            CreateStudentCommand = new Command(CreateStudent);
-            UpdateStudentCommand = new Command<StudentDto>(x => x != null, UpdateStudent);
-            DeleteStudentCommand = new Command<StudentDto>(x => x != null, DeleteStudent);
+            RegisterStudentCommand = new Command(RegisterStudent);
+            EditPersonalInfoCommand = new Command<StudentDto>(x => x != null, EditPersonalInfo);
+            UnregisterStudentCommand = new Command<StudentDto>(x => x != null, UnregisterStudent);
+            EnrollCommand = new Command<long>(Enroll);
+            TransferCommand = new Command<long>(Transfer);
+            DisenrollCommand = new Command<long>(Disenroll);
 
             Search();
         }
 
-        private void DeleteStudent(StudentDto dto)
+        private void Disenroll(long studentId)
         {
-            ApiClient.Delete(dto.Id).ConfigureAwait(false).GetAwaiter().GetResult();
-
-            Search();
-        }
-
-        private void UpdateStudent(StudentDto dto)
-        {
-            var viewModel = new StudentViewModel(dto);
+            var viewModel = new DisenrollViewModel(studentId, 1);
             _dialogService.ShowDialog(viewModel);
 
             Search();
         }
 
-        private void CreateStudent()
+        private void Transfer(long studentId)
         {
-            var viewModel = new StudentViewModel();
+            var viewModel = new TransferViewModel(studentId);
+            _dialogService.ShowDialog(viewModel);
+
+            Search();
+        }
+
+        private void Enroll(long studentId)
+        {
+            var viewModel = new EnrollViewModel(studentId);
+            _dialogService.ShowDialog(viewModel);
+
+            Search();
+        }
+
+        private void UnregisterStudent(StudentDto dto)
+        {
+            ApiClient.Unregister(dto.Id).ConfigureAwait(false).GetAwaiter().GetResult();
+
+            Search();
+        }
+
+        private void EditPersonalInfo(StudentDto dto)
+        {
+            var viewModel = new EditPersonalInfoViewModel(dto.Id, dto.Name, dto.Email);
+            _dialogService.ShowDialog(viewModel);
+
+            Search();
+        }
+
+        private void RegisterStudent()
+        {
+            var viewModel = new RegisterStudentViewModel();
             _dialogService.ShowDialog(viewModel);
 
             Search();
@@ -54,6 +84,12 @@ namespace UI.Students
         private void Search()
         {
             Students = ApiClient.GetAll(SelectedCourse, SelectedNumberOfCourses).ConfigureAwait(false).GetAwaiter().GetResult();
+            foreach (StudentDto student in Students)
+            {
+                student.EnrollCommand = EnrollCommand;
+                student.TransferCommand = TransferCommand;
+                student.DisenrollCommand = DisenrollCommand;
+            }
 
             Notify(nameof(Students));
         }

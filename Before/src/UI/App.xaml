@@ -7,7 +7,12 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="Common/Common.xaml" />
                 <ResourceDictionary Source="Students/StudentListView.xaml" />
-                <ResourceDictionary Source="Students/StudentView.xaml" />
+                <ResourceDictionary Source="Students/EnrollView.xaml" />
+                <ResourceDictionary Source="Students/RegisterStudentView.xaml" />
+                <ResourceDictionary Source="Students/DisenrollView.xaml" />
+                <ResourceDictionary Source="Students/TransferView.xaml" />
+                <ResourceDictionary Source="Students/EditPersonalInfo.xaml" />
+                <ResourceDictionary Source="Students/RegisterStudentView.xaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>
