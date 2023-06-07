@@ -1,10 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using Api.Dtos;
+﻿using CSharpFunctionalExtensions;
+using Logic.Dtos;
 using Logic.Students;
 using Logic.Utils;
 using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Api.Controllers
 {
@@ -12,12 +13,14 @@ namespace Api.Controllers
     public sealed class StudentController : BaseController
     {
         private readonly UnitOfWork _unitOfWork;
+        private readonly Messages _messages;
         private readonly StudentRepository _studentRepository;
         private readonly CourseRepository _courseRepository;
 
-        public StudentController(UnitOfWork unitOfWork)
+        public StudentController(UnitOfWork unitOfWork, Messages messages)
         {
             _unitOfWork = unitOfWork;
+            _messages = messages;
             _studentRepository = new StudentRepository(unitOfWork);
             _courseRepository = new CourseRepository(unitOfWork);
         }
@@ -25,26 +28,9 @@ namespace Api.Controllers
         [HttpGet]
         public IActionResult GetList(string enrolled, int? number)
         {
-            IReadOnlyList<Student> students = _studentRepository.GetList(enrolled, number);
-            List<StudentDto> dtos = students.Select(x => ConvertToDto(x)).ToList();
-            _unitOfWork.Commit();
-            return Ok(dtos);
-        }
+            List<StudentDto> list = _messages.Dispatch(new GetListQuery(enrolled, number));
 
-        private StudentDto ConvertToDto(Student student)
-        {
-            return new StudentDto
-            {
-                Id = student.Id,
-                Name = student.Name,
-                Email = student.Email,
-                Course1 = student.FirstEnrollment?.Course?.Name,
-                Course1Grade = student.FirstEnrollment?.Grade.ToString(),
-                Course1Credits = student.FirstEnrollment?.Course?.Credits,
-                Course2 = student.SecondEnrollment?.Course?.Name,
-                Course2Grade = student.SecondEnrollment?.Grade.ToString(),
-                Course2Credits = student.SecondEnrollment?.Course?.Credits,
-            };
+            return Ok(list);
         }
 
         [HttpPost]
@@ -154,16 +140,10 @@ namespace Api.Controllers
         [HttpPut("{id}")]
         public IActionResult EditPersonalInfo(long id, [FromBody] StudentDto dto)
         {
-            Student student = _studentRepository.GetById(id);
-            if (student == null)
-                return Error($"No student found for Id {id}");
+            var command = new EditPersonalInfoCommand(id, dto.Email, dto.Name);
 
-            student.Name = dto.Name;
-            student.Email = dto.Email;
-
-            _unitOfWork.Commit();
-
-            return Ok();
+            Result result = _messages.Dispatch(command);
+            return result.IsSuccess ? Ok() : Error(result.Error);
         }
     }
 }
