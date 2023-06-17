@@ -71,7 +71,7 @@ namespace Api.Controllers
         [HttpPut("{id}")]
         public IActionResult EditPersonalInfo(long id, [FromBody] StudentDto dto)
         {
-            var command = new EditPersonalInfoCommand(id, dto.Email, dto.Name);
+            var command = new EditPersonalInfoCommand(id, dto.Name, dto.Email);
 
             Result result = _messages.Dispatch(command);
             return FromResult(result);

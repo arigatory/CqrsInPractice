@@ -1,11 +1,11 @@
 ﻿using Api.Utils;
+using Logic.Decorators;
 using Logic.Dtos;
 using Logic.Students;
 using Logic.Utils;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using NHibernate.Mapping;
 using System.Collections.Generic;
 
 namespace Api
@@ -23,16 +23,14 @@ namespace Api
         {
             services.AddMvc();
 
+            var config = new Config(3);  // deserialize from appsettings.json
+            services.AddSingleton(config);
+
             services.AddSingleton(new SessionFactory(Configuration["ConnectionString"]));
             services.AddTransient<UnitOfWork>();
-            services.AddTransient<ICommandHandler<EditPersonalInfoCommand>, EditPersonalInfoCommandHandler>();
-            services.AddTransient<ICommandHandler<RegisterCommand>, RegisterCommandHandler>();
-            services.AddTransient<ICommandHandler<UnregisterCommand>, UnregisterCommandHandler>();
-            services.AddTransient<ICommandHandler<EnrollCommand>, EnrollCommandHandler>();
-            services.AddTransient<ICommandHandler<TransferCommand>, TransferCommandHandler>();
-            services.AddTransient<ICommandHandler<DisenrollCommand>, DisenrollCommandHandler>();
-            services.AddTransient<IQueryHandler<GetListQuery, List<StudentDto>>, GetListQueryHandler>();
+            
             services.AddSingleton<Messages>();
+            services.AddHandlers();
         }
 
         public void Configure(IApplicationBuilder app)
