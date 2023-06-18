@@ -1,12 +1,9 @@
 ﻿using Api.Utils;
-using Logic.Decorators;
-using Logic.Dtos;
-using Logic.Students;
 using Logic.Utils;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using System.Collections.Generic;
 
 namespace Api
 {
@@ -21,14 +18,18 @@ namespace Api
 
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddMvc();
+            services
+     // more specific than AddMvc()
+     .AddControllersWithViews()
+     .SetCompatibilityVersion(CompatibilityVersion.Version_3_0);
 
             var config = new Config(3);  // deserialize from appsettings.json
             services.AddSingleton(config);
 
-            services.AddSingleton(new SessionFactory(Configuration["ConnectionString"]));
-            services.AddTransient<UnitOfWork>();
-            
+            var connectionString = new ConnectionString(Configuration["ConnectionString"]);
+            services.AddSingleton(connectionString);
+
+            services.AddSingleton<SessionFactory>();
             services.AddSingleton<Messages>();
             services.AddHandlers();
         }
@@ -36,7 +37,14 @@ namespace Api
         public void Configure(IApplicationBuilder app)
         {
             app.UseMiddleware<ExceptionHandler>();
-            app.UseMvc();
+            app.UseRouting();
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapDefaultControllerRoute();
+                // Which is the same as the template
+                endpoints.MapControllerRoute("default", "{controller=Home}/{action=Index}/{id?}");
+            });
+
         }
     }
 }
